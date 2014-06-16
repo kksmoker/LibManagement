@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+	<!DOCTYPE struts PUBLIC
+	    "-//Apache Software Foundation//DTD Struts Configuration 2.0//EN"
+    "http://struts.apache.org/dtds/struts-2.0.dtd">
+
+<struts>
+	<!-- struts常量配置 -->
+	<constant name="struts.objectFactory" value="spring" />
+	<constant name="struts.i18n.encoding" value="utf-8"></constant>
+	<!-- 指明由spring创建Action实例 -->
+	<constant name="struts.objectFactory" value="spring"></constant>
+	<constant name="struts.action.extension" value="do,action" />
+	<!-- struts常量配置结束 -->
+
+	<package name="user" namespace="/action/user" extends="struts-default">
+		<action name="*" class="com.lib.action.UserAction" method="{1}">
+			<result name="success">/personal/index.jsp</result>
+			<result name="error">/sign-in.jsp</result>
+			<result name="email">/personal/email.jsp</result>
+			<result name="pass">/personal/pass.jsp</result>
+			<result name="search">/search.jsp</result>
+		</action>
+	</package>
+	<package name="book" namespace="/action/book" extends="struts-default">
+		<action name="unreturn" class="com.lib.action.BooksAction" method="listUnreturn">
+			<result name="success">/personal/unreturn.jsp</result>
+			<result name="error" type="redirect">/action/user/logout.do</result>
+		</action>
+		<action name="renew" class="com.lib.action.BooksAction" method="renew">
+			<result name="success" type="redirectAction">
+				<param name="actionName">unreturn</param>
+				<param name="namespace">/action/book</param>
+			</result>
+			<result name="error" type="redirect">/action/user/logout.do</result>
+		</action>
+		<action name="history" class="com.lib.action.BooksAction" method="history">
+			<result name="error">/sign-in.jsp</result>
+			<result name="success">/personal/history.jsp</result>
+		</action>
+		<action name="search" class="com.lib.action.BooksAction" method="search">
+			<result name="success">/search.jsp</result>
+		</action>
+		<action name="toSearch" class="com.lib.action.BooksAction" method="toSearch">
+			<result name="success">/search.jsp</result>
+		</action>
+	</package>
+	<package name="storage" namespace="/action/storage" extends="struts-default">
+		<action name="*" class="com.lib.action.StorageAction" method="{1}">
+			<result name="putin">/admin/putin.jsp</result>
+			<result name="search" type="redirectAction">
+				<param name="actionName">toSearch</param>
+				<param name="namespace">/action/book</param>
+			</result>
+			<result name="toedit">/admin/edit.jsp</result>
+			<result name="borrow">/admin/borrow.jsp</result>
+			<result name="retn">/admin/return.jsp</result>
+		</action>
+	</package>
+	<package name="category" namespace="/action/category" extends="struts-default">
+		<action name="*" class="com.lib.action.CategoryAction" method="{1}">
+			<result name="success">/super/cate.jsp</result>
+			<result name="cateedit">/super/cate_edit.jsp</result>
+		</action>
+	</package>
+	<package name="position" namespace="/action/position" extends="struts-default">
+		<action name="posi_*" class="com.lib.action.PositionAction" method="{1}">
+			<result name="success">/super/posi.jsp</result>
+			<result name="posiedit">/super/posi_edit.jsp</result>
+		</action>
+	</package>
+</struts>

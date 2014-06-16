@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+           http://www.springframework.org/schema/context 
+           http://www.springframework.org/schema/context/spring-context-3.0.xsd
+           http://www.springframework.org/schema/aop 
+           http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+           http://www.springframework.org/schema/tx 
+           http://www.springframework.org/schema/tx/spring-tx-3.0.xsd">
+
+	<!-- 数据源配置 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="org.gjt.mm.mysql.Driver" />
+		<!-- url配置中将&号写为&amp;由于&是xml保留字 -->
+		<property name="jdbcUrl"
+			value="jdbc:mysql://localhost:3306/libmanag?useUnicode=true&amp;characterEncoding=utf8" />
+		<property name="user" value="root" />
+		<property name="password" value="123456" />
+		<!--初始化时获取的连接数，取值应在minPoolSize与maxPoolSize之间。Default: 3 -->
+		<property name="initialPoolSize" value="1" />
+		<!--连接池中保留的最小连接数。 -->
+		<property name="minPoolSize" value="1" />
+		<!--连接池中保留的最大连接数。Default: 15 -->
+		<property name="maxPoolSize" value="300" />
+		<!--最大空闲时间,60秒内未使用则连接被丢弃。若为0则永不丢弃。Default: 0 -->
+		<property name="maxIdleTime" value="60" />
+		<!--当连接池中的连接耗尽的时候c3p0一次同时获取的连接数。Default: 3 -->
+		<property name="acquireIncrement" value="5" />
+		<!--每60秒检查所有连接池中的空闲连接。Default: 0 -->
+		<property name="idleConnectionTestPeriod" value="60" />
+	</bean>
+
+	<!-- sessionFactory配置 -->
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="mappingResources">
+			<list>
+				<value>com/lib/domain/User.hbm.xml</value>
+				<value>com/lib/domain/SearchRecord.hbm.xml</value>
+				<value>com/lib/domain/Books.hbm.xml</value>
+				<value>com/lib/domain/Position.hbm.xml</value>
+				<value>com/lib/domain/Category.hbm.xml</value>
+				<value>com/lib/domain/BorrowRecord.hbm.xml</value>
+			</list>
+		</property>
+		<property name="hibernateProperties">
+			<value>
+				hibernate.dialect=org.hibernate.dialect.MySQL5Dialect
+				hibernate.hbm2ddl.auto=update
+				hibernate.show_sql=false
+				hibernate.format_sql=false
+				hibernate.connection.autocommit=true
+			</value>
+		</property>
+	</bean>
+
+	<!-- 事务管理配置,使用spring很大一部分原因是用spring的事务管理器 -->
+	<bean id="txManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<!-- 由于要通过session开启事务,需要提供sessionFactory -->
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	<!-- 事务的传播性 -->
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<tx:method name="insert*" propagation="REQUIRED" />
+			<tx:method name="update*" propagation="REQUIRED" />
+			<tx:method name="delete*" propagation="REQUIRED" />
+			<tx:method name="save*" propagation="REQUIRED" />
+			<tx:method name="add*" propagation="REQUIRED" />
+			<tx:method name="*" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+	<aop:config proxy-target-class="true">
+		<aop:pointcut expression="execution(* com.lib.dao..*.*(..)) OR execution(* com.lib.service..*.*(..))" id="transactionPointcut"/>
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="transactionPointcut" />
+	</aop:config>
+	
+	<!-- 注入userDao -->
+	<bean id="userDao" class="com.lib.dao.impl.UserDaoImpl">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	
+	<!-- 注入categoryDao -->
+	<bean id="categoryDao" class="com.lib.dao.impl.CategoryDaoImpl">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	
+	<!-- 注入positionDao -->
+	<bean id="positionDao" class="com.lib.dao.impl.PositionDaoImpl">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	
+	<!-- 注入booksDao -->
+	<bean id="booksDao" class="com.lib.dao.impl.BooksDaoImpl">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	
+	<!-- 注入borrowRecordDao -->
+	<bean id="borrowRecordDao" class="com.lib.dao.impl.BorrowRecordDaoImpl">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	
+	<!-- 注入searchRecordDao -->
+	<bean id="searchRecordDao" class="com.lib.dao.impl.SearchRecordDaoImpl">
+		<property name="sessionFactory" ref="sessionFactory" /> 
+	</bean>
+	
+	<!-- 注入userService -->
+	<bean id="userService" class="com.lib.service.impl.UserServiceImpl">
+		<property name="userDao" ref="userDao" />
+	</bean>
+	
+	<!-- 注入categoryService -->
+	<bean id="categoryService" class="com.lib.service.impl.CategoryServiceImpl">
+		<property name="categoryDao" ref="categoryDao" />
+	</bean>
+	
+	<!-- 注入positionService -->
+	<bean id="positionService" class="com.lib.service.impl.PositionServiceImpl">
+		<property name="positionDao" ref="positionDao" />
+	</bean>
+	
+	<!-- 注入searchRecordService -->
+	<bean id="searchRecordService" class="com.lib.service.impl.SearchRecordServiceImpl">
+		<property name="searchRecordDao" ref="searchRecordDao" />
+	</bean>
+	
+	<!-- 注入booksService -->
+	<bean id="booksService" class="com.lib.service.impl.BooksServiceImpl">
+		<property name="booksDao" ref="booksDao" />
+		<property name="borrowRecordDao" ref="borrowRecordDao" />
+		<property name="userDao" ref="userDao" />
+		<property name="searchRecordService" ref="searchRecordService" />
+	</bean>
+	
+	<!-- 注入UserAction -->
+	<bean id="userAction" class="com.lib.action.UserAction">
+		<property name="userService" ref="userService" />
+	</bean>
+	
+	<!-- 注入BooksAction -->
+	<bean id="booksAction" class="com.lib.action.BooksAction">
+		<property name="booksService" ref="booksService" />
+	</bean>
+	
+	<!-- 注入StorageAction -->
+	<bean id="storageAction" class="com.lib.action.StorageAction">
+		<property name="categoryService" ref="categoryService"/>
+		<property name="positionService" ref="positionService"/>
+		<property name="booksService" ref="booksService" />
+	</bean>
+	
+	<!-- 注入CategoryAction -->
+	<bean id="categoryAction" class="com.lib.action.CategoryAction">
+		<property name="categoryService" ref="categoryService"/>
+	</bean>
+	
+	<!-- 注入PositionAction -->
+	<bean id="positionAction" class="com.lib.action.PositionAction">
+		<property name="positionService" ref="positionService"/>
+	</bean>
+</beans>
